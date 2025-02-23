@@ -1,14 +1,13 @@
 import cv2
 import depthai as dai
-from gui import FrameViewer
-from PyQt6.QtWidgets import QApplication, QWidget
 
 
-class CameraController(FrameViewer):
+class CameraController:
 
-    def __init__(self, color_order: str, option: str) -> None:
+    def __init__(self, color_order: str, option: str, pipeline: dai.Pipeline) -> None:
         self.color_order = color_order
         self.option = option
+        self.pipeline = pipeline
         super().__init__()
 
     def rgb_init(self, pipeline: dai.Pipeline) -> None:
@@ -41,10 +40,10 @@ class CameraController(FrameViewer):
             xoutRgb.input.setQueueSize(1)
 
     def rgb_preview(self) -> None:
-        self.rgb_init(dai.Pipeline)
+        self.rgb_init(self.pipeline)
 
         # Connect to device and start pipeline
-        with dai.Device(dai.Pipeline) as device:
+        with dai.Device(self.pipeline) as device:
 
             # Output queue will be used to get the rgb frames from the output defined above
             qRgb = device.getOutputQueue(name="rgb", maxSize=4, blocking=False)
@@ -62,10 +61,10 @@ class CameraController(FrameViewer):
 
     # TODO: Redo the rgb_video() method to use opencv2
     def rgb_video(self) -> None:
-        self.rgb_init(dai.Pipeline)
+        self.rgb_init(self.pipeline)
 
         # Connect to device and start pipeline
-        with dai.Device(dai.Pipeline) as device:
+        with dai.Device(self.pipeline) as device:
 
             # Output queue will be used to get the encoded data from the output defined above
             q = device.getOutputQueue(name="h265", maxSize=30, blocking=True)
