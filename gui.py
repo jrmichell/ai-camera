@@ -1,38 +1,34 @@
 # Imports
-import os
-import sys
-import cv2
-import string
-import numpy as np
-from PyQt6.QtGui import QPixmap
-from PyQt6.QtWidgets import (
-    QMainWindow,
-    QWidget,
-    QGridLayout,
-    QLabel,
-    QLineEdit,
-    QPushButton,
-    QApplication,
-    QComboBox,
-)
-from PyQt6.QtCore import Qt
-from PyQt6 import QtCore
+from PyQt6.QtWidgets import QGridLayout, QPushButton, QWidget
 
 
-class FrameViewer(QMainWindow):
-
+class Window(QWidget):
     def __init__(self):
         super().__init__()
+        # NOTE: This will no longer be needed when the camera is implemented
+        self.setWindowTitle("Camera")
 
-        # Initialize Main Window
+        # Layouts
+        main_layout = QGridLayout()
+
+        # Widgets
         self.setStyleSheet(
             "font-family: garamond; \
              color: white; \
              font-size: 32px; \
-             background-color: grey;"
+             background-color: #662d91;"
         )
-        self.setFixedSize(800, 600)
+        self.resize(800, 600)
 
-        # Test Button
-        button = QPushButton("Yes")
-        self.setCentralWidget(button)
+        # Test Buttons
+        yes_button = QPushButton("Yes")
+        yes_button.setFixedSize(150, 150)
+        no_button = QPushButton("No")
+        no_button.setFixedSize(150, 150)
+
+        # Add everything needed for the main layout
+        main_layout.addWidget(yes_button, 1, 1)
+        main_layout.addWidget(no_button, 1, 2)
+
+        # Set the layout to the main layout configured
+        self.setLayout(main_layout)
