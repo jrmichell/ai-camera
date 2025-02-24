@@ -115,9 +115,6 @@ class CameraController(QWidget):
         camera_option_video = QRadioButton("Video", self)
         camera_options_preview = QRadioButton("Preview", self)
 
-        # TODO: Add logic to run rgb_video() or rgb_preview()
-        # depending on selected options
-
         # Add everything needed for the options layout
         options_layout.addWidget(camera_options_preview)
         options_layout.addWidget(camera_option_video)
@@ -132,3 +129,10 @@ class CameraController(QWidget):
             options_layout, 0, 1, alignment=Qt.AlignmentFlag.AlignCenter
         )
         self.setLayout(main_layout)
+
+        if camera_options_preview.isChecked():
+            self.option = "preview"
+            self.rgb_preview()
+        if camera_option_video.isChecked():
+            self.option = "video"
+            self.rgb_video()
