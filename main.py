@@ -1,11 +1,13 @@
+from depthai import Pipeline
 from PyQt6.QtWidgets import QApplication
 
-from gui import Window
+from camera_controller import CameraController
 
 
 def main():
     app = QApplication([])
-    window = Window()
+    pipeline = Pipeline()
+    window = CameraController("RGB", "preview", pipeline)
     window.show()
     app.exec()
 

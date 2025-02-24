@@ -1,14 +1,17 @@
 import cv2
 import depthai as dai
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QComboBox, QGridLayout, QRadioButton, QVBoxLayout, QWidget
 
 
-class CameraController:
-
+class CameraController(QWidget):
     def __init__(self, color_order: str, option: str, pipeline: dai.Pipeline) -> None:
         self.color_order = color_order
         self.option = option
         self.pipeline = pipeline
         super().__init__()
+
+        self.create_window()
 
     def rgb_init(self, pipeline: dai.Pipeline) -> None:
 
@@ -88,3 +91,44 @@ class CameraController:
             "To view the encoded data, convert the stream file (.h265) into a video file (.mp4) using a command below:"
         )
         print("ffmpeg -framerate 30 -i video.h265 -c copy video.mp4")
+
+    def create_window(self) -> None:
+        self.setWindowTitle("Camera")
+
+        # Layouts
+        main_layout = QGridLayout()
+        options_layout = QVBoxLayout()
+
+        self.setStyleSheet(
+            "font-family: garamond; \
+             color: #000; \
+             font-size: 32px; \
+             background-color: #fff;"
+        )
+        self.resize(800, 600)
+
+        # Widgets
+        color_orders = ["RGB", "BGR"]
+        color_order_selector = QComboBox()
+        color_order_selector.addItems(color_orders)
+
+        camera_option_video = QRadioButton("Video", self)
+        camera_options_preview = QRadioButton("Preview", self)
+
+        # TODO: Add logic to run rgb_video() or rgb_preview()
+        # depending on selected options
+
+        # Add everything needed for the options layout
+        options_layout.addWidget(camera_options_preview)
+        options_layout.addWidget(camera_option_video)
+
+        # Add everything needed for the main layout
+        main_layout.addWidget(
+            color_order_selector, 0, 1, alignment=Qt.AlignmentFlag.AlignLeft
+        )
+
+        # Set layouts
+        main_layout.addLayout(
+            options_layout, 0, 1, alignment=Qt.AlignmentFlag.AlignCenter
+        )
+        self.setLayout(main_layout)
