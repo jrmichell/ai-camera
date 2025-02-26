@@ -1,7 +1,16 @@
 import cv2
 import depthai as dai
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QComboBox, QGridLayout, QRadioButton, QVBoxLayout, QWidget
+from PyQt6.QtGui import QPixmap
+from PyQt6.QtWidgets import (
+    QComboBox,
+    QFrame,
+    QGridLayout,
+    QLabel,
+    QRadioButton,
+    QVBoxLayout,
+    QWidget,
+)
 
 
 class CameraController(QWidget):
@@ -57,10 +66,8 @@ class CameraController(QWidget):
                 )  # blocking call, will wait until a new data has arrived
 
                 # Retrieve 'bgr' (opencv format) frame
-                cv2.imshow(self.option, inRgb.getCvFrame())
-
-                if cv2.waitKey(1) == ord("q"):
-                    break
+                pixmap = QPixmap(inRgb)
+                self.frame.setPixmap(pixmap)
 
     # TODO: Redo the rgb_video() method to use opencv2
     def rgb_video(self) -> None:
@@ -115,24 +122,33 @@ class CameraController(QWidget):
         camera_option_video = QRadioButton("Video", self)
         camera_options_preview = QRadioButton("Preview", self)
 
+        self.frame = QLabel()
+
+        # Set preview to be checked by default
+        camera_options_preview.setChecked(
+            True
+        )  # NOTE: Crashes program if camera is not connected
+
         # Add everything needed for the options layout
         options_layout.addWidget(camera_options_preview)
         options_layout.addWidget(camera_option_video)
 
         # Add everything needed for the main layout
         main_layout.addWidget(
-            color_order_selector, 0, 1, alignment=Qt.AlignmentFlag.AlignLeft
+            color_order_selector, 1, 1, alignment=Qt.AlignmentFlag.AlignLeft
         )
+        main_layout.addWidget(self.frame, 0, 1, alignment=Qt.AlignmentFlag.AlignCenter)
 
         # Set layouts
         main_layout.addLayout(
-            options_layout, 0, 1, alignment=Qt.AlignmentFlag.AlignCenter
+            options_layout, 1, 1, alignment=Qt.AlignmentFlag.AlignRight
         )
         self.setLayout(main_layout)
 
+        # TODO: Wait until selection is executed
         if camera_options_preview.isChecked():
             self.option = "preview"
             self.rgb_preview()
         if camera_option_video.isChecked():
             self.option = "video"
-            self.rgb_video()
+            # self.rgb_video()
