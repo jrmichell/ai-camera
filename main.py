@@ -6,8 +6,7 @@ from camera_controller import CameraController
 
 def main():
     app = QApplication([])
-    pipeline = Pipeline()
-    window = CameraController("RGB", "preview", pipeline)
+    window = CameraController("RGB", "preview")
     window.show()
     app.exec()
 

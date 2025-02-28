@@ -4,7 +4,6 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QImage, QPixmap
 from PyQt6.QtWidgets import (
     QComboBox,
-    QFrame,
     QGridLayout,
     QLabel,
     QRadioButton,
@@ -14,14 +13,15 @@ from PyQt6.QtWidgets import (
 
 
 class CameraController(QWidget):
-    def __init__(self, color_order: str, option: str, pipeline: dai.Pipeline) -> None:
+    def __init__(self, color_order: str, option: str) -> None:
         self.color_order = color_order
         self.option = option
         super().__init__()
 
-        self.create_window(pipeline)
+        self.create_window()
 
-    def rgb_init(self, pipeline: dai.Pipeline) -> dai.Pipeline:
+    def rgb_init(self) -> dai.Pipeline:
+        pipeline = dai.Pipeline()
 
         # Define source and output
         camRgb = pipeline.create(dai.node.ColorCamera)
@@ -52,8 +52,9 @@ class CameraController(QWidget):
 
         return pipeline
 
-    def rgb_preview(self, pipeline: dai.Pipeline) -> None:
-        pipeline = self.rgb_init(pipeline)
+    def rgb_preview(self) -> None:
+        # Retrieve pipeline from rgb_init
+        pipeline = self.rgb_init()
 
         # Connect to device and start pipeline
         with dai.Device(pipeline) as device:
@@ -67,18 +68,21 @@ class CameraController(QWidget):
                 )  # blocking call, will wait until a new data has arrived
 
                 # Retrieve 'bgr' (opencv format) frame
+                cv2.imshow(self.color_order.lower(), inRgb.getCvFrame())
 
-                frame = inRgb.getCvFrame()
-                height, width, channels = frame.shape
-                img = QImage(
-                    frame, width, height, channels, QImage.Format.Format_RGB888
-                )
-                pixmap = QPixmap(img)
-                self.frame.setPixmap(pixmap)
+                # FIX: Display preview in GUI
+                # frame = inRgb.getCvFrame()
+                # height, width, channels = frame.shape
+                # img = QImage(
+                #     frame, width, height, channels, QImage.Format.Format_RGB888
+                # )
+                # pixmap = QPixmap(img)
+                # self.frame.setPixmap(pixmap)
 
     # TODO: Redo the rgb_video() method to use opencv2
     def rgb_video(self, pipeline: dai.Pipeline) -> None:
-        self.rgb_init(pipeline)
+        # Retrieve pipeline from rgb_init
+        pipeline = self.rgb_init()
         # Connect to device and start pipeline
         with dai.Device(pipeline) as device:
 
@@ -105,7 +109,7 @@ class CameraController(QWidget):
         )
         print("ffmpeg -framerate 30 -i video.h265 -c copy video.mp4")
 
-    def create_window(self, pipeline: dai.Pipeline) -> None:
+    def create_window(self) -> None:
         self.setWindowTitle("Camera")
 
         # Layouts
@@ -154,7 +158,7 @@ class CameraController(QWidget):
         # TODO: Wait until selection is executed
         if camera_options_preview.isChecked():
             self.option = "preview"
-            self.rgb_preview(pipeline)
+            self.rgb_preview()
         if camera_option_video.isChecked():
             self.option = "video"
             # self.rgb_video(pipeline)
