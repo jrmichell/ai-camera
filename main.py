@@ -6,7 +6,7 @@ from camera_controller import CameraController
 
 def main():
     app = QApplication([])
-    window = CameraController("RGB", "preview")
+    window = CameraController("RGB")
     window.show()
     app.exec()
 

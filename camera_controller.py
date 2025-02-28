@@ -13,21 +13,21 @@ from PyQt6.QtWidgets import (
 
 
 class CameraController(QWidget):
-    def __init__(self, color_order: str, option: str) -> None:
+    def __init__(self, color_order: str) -> None:
         self.color_order = color_order
-        self.option = option
+        self.pipeline = dai.Pipeline()
         super().__init__()
 
-        self.create_window()
-
-    def rgb_init(self) -> dai.Pipeline:
-        pipeline = dai.Pipeline()
+    def rgb_init(self) -> None:
+        # pipeline = dai.Pipeline()
 
         # Define source and output
-        camRgb = pipeline.create(dai.node.ColorCamera)
-        xoutRgb = pipeline.create(dai.node.XLinkOut)
+        camRgb = self.pipeline.create(dai.node.ColorCamera)
+        xoutRgb = self.pipeline.create(dai.node.XLinkOut)
 
         xoutRgb.setStreamName(self.color_order.lower())
+
+        option = ["preview", "video"]
 
         if self.color_order == "RGB":
             camRgb.setColorOrder(dai.ColorCameraProperties.ColorOrder.RGB)
@@ -35,14 +35,14 @@ class CameraController(QWidget):
         if self.color_order == "BGR":
             camRgb.setColorOrder(dai.ColorCameraProperties.ColorOrder.BGR)
 
-        if self.option == "preview":
+        if option[0]:  # Preview
             # Linking
             camRgb.preview.link(xoutRgb.input)
 
             # Properties
             camRgb.setInterleaved(False)
 
-        if self.option == "video":
+        if option[1]:  # Video
             # Properties
             camRgb.setBoardSocket(dai.CameraBoardSocket.CAM_A)
             camRgb.setResolution(dai.ColorCameraProperties.SensorResolution.THE_1080_P)
@@ -50,14 +50,15 @@ class CameraController(QWidget):
             xoutRgb.input.setBlocking(False)
             xoutRgb.input.setQueueSize(1)
 
-        return pipeline
-
     def rgb_preview(self) -> None:
-        # Retrieve pipeline from rgb_init
-        pipeline = self.rgb_init()
+        self.rgb_init()
+
+        print("pipeline", self.pipeline)
 
         # Connect to device and start pipeline
-        with dai.Device(pipeline) as device:
+        with dai.Device(self.pipeline) as device:
+
+            print("device", device)
 
             # Output queue will be used to get the rgb frames from the output defined above
             qRgb = device.getOutputQueue(name="rgb", maxSize=4, blocking=False)
@@ -70,6 +71,9 @@ class CameraController(QWidget):
                 # Retrieve 'bgr' (opencv format) frame
                 cv2.imshow(self.color_order.lower(), inRgb.getCvFrame())
 
+                if cv2.waitKey(1) == ord("q"):
+                    break
+
                 # FIX: Display preview in GUI
                 # frame = inRgb.getCvFrame()
                 # height, width, channels = frame.shape
@@ -81,8 +85,7 @@ class CameraController(QWidget):
 
     # TODO: Redo the rgb_video() method to use opencv2
     def rgb_video(self, pipeline: dai.Pipeline) -> None:
-        # Retrieve pipeline from rgb_init
-        pipeline = self.rgb_init()
+        self.rgb_init()
         # Connect to device and start pipeline
         with dai.Device(pipeline) as device:
 
