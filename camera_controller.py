@@ -1,24 +1,14 @@
 import cv2
 import depthai as dai
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QImage, QPixmap
-from PyQt6.QtWidgets import (
-    QComboBox,
-    QGridLayout,
-    QLabel,
-    QRadioButton,
-    QVBoxLayout,
-    QWidget,
-)
 
 
-class CameraController(QWidget):
+class CameraController:
     def __init__(self, color_order: str, option: str) -> None:
         self.color_order = color_order
         self.option = option
         super().__init__()
 
-        self.create_window()
+        # self.create_window()
 
     def rgb_init(self) -> dai.Pipeline:
         pipeline = dai.Pipeline()
@@ -108,57 +98,3 @@ class CameraController(QWidget):
             "To view the encoded data, convert the stream file (.h265) into a video file (.mp4) using a command below:"
         )
         print("ffmpeg -framerate 30 -i video.h265 -c copy video.mp4")
-
-    def create_window(self) -> None:
-        self.setWindowTitle("Camera")
-
-        # Layouts
-        main_layout = QGridLayout()
-        options_layout = QVBoxLayout()
-
-        self.setStyleSheet(
-            "font-family: garamond; \
-             color: #000; \
-             font-size: 32px; \
-             background-color: #fff;"
-        )
-        self.resize(800, 600)
-
-        # Widgets
-        color_orders = ["RGB", "BGR"]
-        color_order_selector = QComboBox()
-        color_order_selector.addItems(color_orders)
-
-        camera_option_video = QRadioButton("Video", self)
-        camera_options_preview = QRadioButton("Preview", self)
-
-        self.frame = QLabel()
-
-        # Set preview to be checked by default
-        camera_options_preview.setChecked(
-            True
-        )  # NOTE: Crashes program if camera is not connected
-
-        # Add everything needed for the options layout
-        options_layout.addWidget(camera_options_preview)
-        options_layout.addWidget(camera_option_video)
-
-        # Add everything needed for the main layout
-        main_layout.addWidget(
-            color_order_selector, 1, 1, alignment=Qt.AlignmentFlag.AlignLeft
-        )
-        main_layout.addWidget(self.frame, 0, 1, alignment=Qt.AlignmentFlag.AlignCenter)
-
-        # Set layouts
-        main_layout.addLayout(
-            options_layout, 1, 1, alignment=Qt.AlignmentFlag.AlignRight
-        )
-        self.setLayout(main_layout)
-
-        # TODO: Wait until selection is executed
-        if camera_options_preview.isChecked():
-            self.option = "preview"
-            self.rgb_preview()
-        if camera_option_video.isChecked():
-            self.option = "video"
-            # self.rgb_video(pipeline)
