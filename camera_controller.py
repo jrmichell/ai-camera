@@ -3,9 +3,8 @@ import depthai as dai
 
 
 class CameraController:
-    def __init__(self, color_order: str, option: str) -> None:
+    def __init__(self, color_order: str) -> None:
         self.color_order = color_order
-        self.option = option
         super().__init__()
 
         # self.create_window()
@@ -19,20 +18,22 @@ class CameraController:
 
         xoutRgb.setStreamName(self.color_order.lower())
 
+        option = ["preview", "video"]
+
         if self.color_order == "RGB":
             camRgb.setColorOrder(dai.ColorCameraProperties.ColorOrder.RGB)
 
         if self.color_order == "BGR":
             camRgb.setColorOrder(dai.ColorCameraProperties.ColorOrder.BGR)
 
-        if self.option == "preview":
+        if option[0]:  # Preview
             # Linking
             camRgb.preview.link(xoutRgb.input)
 
             # Properties
             camRgb.setInterleaved(False)
 
-        if self.option == "video":
+        if option[1]:  # Video
             # Properties
             camRgb.setBoardSocket(dai.CameraBoardSocket.CAM_A)
             camRgb.setResolution(dai.ColorCameraProperties.SensorResolution.THE_1080_P)
