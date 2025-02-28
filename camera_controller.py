@@ -5,14 +5,15 @@ import depthai as dai
 class CameraController:
     def __init__(self, color_order: str) -> None:
         self.color_order = color_order
+        self.pipeline = dai.Pipeline()
         super().__init__()
 
-    def rgb_init(self):
-        pipeline = dai.Pipeline()
+    def rgb_init(self) -> None:
+        # pipeline = dai.Pipeline()
 
         # Define source and output
-        camRgb = pipeline.create(dai.node.ColorCamera)
-        xoutRgb = pipeline.create(dai.node.XLinkOut)
+        camRgb = self.pipeline.create(dai.node.ColorCamera)
+        xoutRgb = self.pipeline.create(dai.node.XLinkOut)
 
         xoutRgb.setStreamName(self.color_order.lower())
 
@@ -40,13 +41,10 @@ class CameraController:
             xoutRgb.input.setQueueSize(1)
 
     def rgb_preview(self) -> None:
-        # Retrieve pipeline from rgb_init
-        pipeline = dai.Pipeline()
-
         self.rgb_init()
 
         # Connect to device and start pipeline
-        with dai.Device(pipeline) as device:
+        with dai.Device(self.pipeline) as device:
 
             # Output queue will be used to get the rgb frames from the output defined above
             qRgb = device.getOutputQueue(name="rgb", maxSize=4, blocking=False)
@@ -70,8 +68,7 @@ class CameraController:
 
     # TODO: Redo the rgb_video() method to use opencv2
     def rgb_video(self, pipeline: dai.Pipeline) -> None:
-        # Retrieve pipeline from rgb_init
-        pipeline = self.rgb_init()
+        self.rgb_init()
         # Connect to device and start pipeline
         with dai.Device(pipeline) as device:
 
