@@ -43,8 +43,12 @@ class CameraController:
     def rgb_preview(self) -> None:
         self.rgb_init()
 
+        print("pipeline", self.pipeline)
+
         # Connect to device and start pipeline
         with dai.Device(self.pipeline) as device:
+
+            print("device", device)
 
             # Output queue will be used to get the rgb frames from the output defined above
             qRgb = device.getOutputQueue(name="rgb", maxSize=4, blocking=False)
@@ -56,6 +60,9 @@ class CameraController:
 
                 # Retrieve 'bgr' (opencv format) frame
                 cv2.imshow(self.color_order.lower(), inRgb.getCvFrame())
+
+                if cv2.waitKey(1) == ord("q"):
+                    break
 
                 # FIX: Display preview in GUI
                 # frame = inRgb.getCvFrame()
