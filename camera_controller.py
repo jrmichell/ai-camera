@@ -7,9 +7,7 @@ class CameraController:
         self.color_order = color_order
         super().__init__()
 
-        # self.create_window()
-
-    def rgb_init(self) -> dai.Pipeline:
+    def rgb_init(self):
         pipeline = dai.Pipeline()
 
         # Define source and output
@@ -41,11 +39,11 @@ class CameraController:
             xoutRgb.input.setBlocking(False)
             xoutRgb.input.setQueueSize(1)
 
-        return pipeline
-
     def rgb_preview(self) -> None:
         # Retrieve pipeline from rgb_init
-        pipeline = self.rgb_init()
+        pipeline = dai.Pipeline()
+
+        self.rgb_init()
 
         # Connect to device and start pipeline
         with dai.Device(pipeline) as device:

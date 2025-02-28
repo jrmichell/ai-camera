@@ -2,7 +2,7 @@ from camera_controller import CameraController
 
 
 def main():
-    camera = CameraController("RGB", "preview")
+    camera = CameraController("RGB")
     camera.rgb_preview()
 
 
