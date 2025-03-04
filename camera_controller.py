@@ -115,17 +115,15 @@ class Window(QMainWindow):
             "font-family: garamond; \
              color: #000; \
              font-size: 32px; \
-             background-color: #fff;"
+             background-color: #000;"
         )
         self.resize(800, 600)
 
         # Start DepthAI Thread
-        try:
-            self.camera_thread = Camera()
-            self.camera_thread.frameCaptured.connect(self.update_frame)
-            self.camera_thread.start()
-        except Exception as e:
-            raise e
+        self.camera_thread = Camera()
+        self.camera_thread.frameCaptured.connect(self.update_frame)
+        print("Signal connected")
+        self.camera_thread.start()
 
     def create_window(self) -> None:
 
@@ -177,6 +175,7 @@ class Window(QMainWindow):
         #     self.rgb_video(pipeline)
 
     def update_frame(self, frame):
+        print("Updating frame")
         """Update QLabel with the latest frame."""
         height, width, channel = frame.shape
         bytes_per_line = 3 * width
