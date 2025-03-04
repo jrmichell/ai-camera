@@ -178,12 +178,10 @@ class Window(QMainWindow):
         height, width, channel = frame.shape
         # bytes_per_line = 3 * width
         qimg = QImage(frame, width, height, channel, QImage.Format.Format_RGB888)
-        pixmap = QPixmap.fromImage(qimg)
+        pixmap = QPixmap(qimg)
 
         # Scale pixmap to fit label while keeping aspect ratio
-        self.video_label.setPixmap(
-            pixmap.scaled(self.video_label.size(), Qt.AspectRatioMode.KeepAspectRatio)
-        )
+        self.video_label.setPixmap(pixmap)
 
     def close_event(self, event):
         """Handle window close event to stop camera thread."""
