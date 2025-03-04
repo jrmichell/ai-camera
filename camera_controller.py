@@ -12,9 +12,11 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+frameCaptured = pyqtSignal(np.ndarray)
+
 
 class Camera(QThread):
-    frameCaptured = pyqtSignal(np.ndarray)
+    frame = pyqtSignal(np.ndarray)
 
     def __init__(self) -> None:
         self.pipeline = dai.Pipeline()
@@ -68,7 +70,7 @@ class Camera(QThread):
                 frame = inRgb.getCvFrame()
 
                 if frame is not None:
-                    self.frameCaptured.emit(frame)  # Emit frame signal
+                    self.frame.emit(frame)  # Emit frame signal
 
                 # Prevent high CPU usage
                 if not self.isInterruptionRequested():
@@ -84,7 +86,6 @@ class Camera(QThread):
 
             # Output queue will be used to get the encoded data from the output defined above
             q = device.getOutputQueue(name="h265", maxSize=30, blocking=True)
-
             # The .h265 file is a raw stream file (not playable yet)
             with open("video.h265", "wb") as videoFile:
                 print("Press Ctrl+C to stop encoding...")
@@ -132,50 +133,48 @@ class Window(QMainWindow):
 
         # Start DepthAI Thread
         self.camera_thread = Camera()
-        self.camera_thread.frameCaptured.connect(self.update_frame)
+        self.camera_thread.frame.connect(self.update_frame(frameCaptured))
         print("Signal connected")
         self.camera_thread.start()
 
     def create_window(self) -> None:
 
         # Layouts
-        main_layout = QGridLayout()
-        options_layout = QVBoxLayout()
+        # main_layout = QGridLayout()
+        # options_layout = QVBoxLayout()
 
         """Color Orders"""
         # Widgets
-        color_orders = ["RGB", "BGR"]
-        color_order_selector = QComboBox()
-        color_order_selector.addItems(color_orders)
-        main_layout.addWidget(
-            color_order_selector, 1, 1, alignment=Qt.AlignmentFlag.AlignLeft
-        )
+        # color_orders = ["RGB", "BGR"]
+        # color_order_selector = QComboBox()
+        # color_order_selector.addItems(color_orders)
+        # self.main_layout.addWidget(color_order_selector)
         """Camera Options"""
-        camera_option_video = QRadioButton("Video", self)
-        camera_options_preview = QRadioButton("Preview", self)
-        main_layout.addLayout(
-            options_layout, 1, 1, alignment=Qt.AlignmentFlag.AlignRight
-        )
+        # camera_option_video = QRadioButton("Video", self)
+        # camera_options_preview = QRadioButton("Preview", self)
+        # self.main_layout.addLayout(
+        #     options_layout, 1, 1, alignment=Qt.AlignmentFlag.AlignRight
+        # )
         # Set preview to be checked by default
-        camera_options_preview.setChecked(
-            True
-        )  # NOTE: Crashes program if camera is not connected
+        # camera_options_preview.setChecked(
+        #     True
+        # )  # NOTE: Crashes program if camera is not connected
 
         # Add everything needed for the options layout
-        options_layout.addWidget(camera_options_preview)
-        options_layout.addWidget(camera_option_video)
+        # options_layout.addWidget(camera_options_preview)
+        # options_layout.addWidget(camera_option_video)
 
         """Video Display"""
-        self.video_label = QLabel(self)
-        self.setCentralWidget(self.video_label)
-        main_layout.addWidget(
-            self.video_label, 0, 1, alignment=Qt.AlignmentFlag.AlignCenter
-        )
+        # self.video_label = QLabel(self)
+        # self.setCentralWidget(self.video_label)
+        # main_layout.addWidget(
+        #     self.video_label, 0, 1, alignment=Qt.AlignmentFlag.AlignCenter
+        # )
 
         # Add everything needed for the main layout
 
         # Set layouts
-        self.setLayout(main_layout)
+        # self.setLayout(main_layout)
 
         # FIX: Wait until selection is executed
         # if camera_options_preview.isChecked():
