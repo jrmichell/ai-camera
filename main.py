@@ -1,13 +1,15 @@
+import sys
+
 from PyQt6.QtWidgets import QApplication
 
-from camera_controller import CameraController
+from camera_controller import Window
 
 
 def main():
-    app = QApplication([])
-    window = CameraController("RGB")
+    app = QApplication(sys.argv)
+    window = Window()
     window.show()
-    app.exec()
+    sys.exit(app.exec())
 
 
 if __name__ == "__main__":
