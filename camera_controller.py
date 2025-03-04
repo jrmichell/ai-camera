@@ -27,14 +27,16 @@ class Camera(QThread):
         xoutRgb = self.pipeline.create(dai.node.XLinkOut)
 
         """Color Orders"""
-        self.color_orders = ["RGB", "BGR"]
-        if self.color_orders[0]:  # RGB
-            camRgb.setColorOrder(dai.ColorCameraProperties.ColorOrder.RGB)
-            xoutRgb.setStreamName(self.color_orders[0].lower())
+        # self.color_orders = ["RGB", "BGR"]
+        # if self.color_orders[0]:  # RGB
+        #     camRgb.setColorOrder(dai.ColorCameraProperties.ColorOrder.RGB)
+        #     xoutRgb.setStreamName(self.color_orders[0].lower())
+        #
+        # if self.color_orders[1]:  # BGR
+        #     camRgb.setColorOrder(dai.ColorCameraProperties.ColorOrder.BGR)
+        #     xoutRgb.setStreamName(self.color_orders[1].lower())
 
-        if self.color_orders[1]:  # BGR
-            camRgb.setColorOrder(dai.ColorCameraProperties.ColorOrder.BGR)
-            xoutRgb.setStreamName(self.color_orders[1].lower())
+        xoutRgb.setStreamName("rgb")
 
         """Options"""
         self.options = ["preview", "video"]
@@ -126,9 +128,7 @@ class Window(QMainWindow):
         self.resize(800, 600)
 
         # Main widget
-        self.central_widget = QWidget(self)
-        self.setCentralWidget(self.central_widget)
-        self.main_layout = QVBoxLayout(self.central_widget)
+        self.main_layout = QVBoxLayout(self)
 
         # QLabel to display the video
         self.video_label = QLabel(self)
