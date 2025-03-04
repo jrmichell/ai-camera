@@ -1,5 +1,3 @@
-import sys
-
 import depthai as dai
 import numpy as np
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
@@ -178,10 +176,8 @@ class Window(QMainWindow):
         print("Updating frame")
         """Update QLabel with the latest frame."""
         height, width, channel = frame.shape
-        bytes_per_line = 3 * width
-        qimg = QImage(
-            frame.data, width, height, bytes_per_line, QImage.Format.Format_RGB888
-        )
+        # bytes_per_line = 3 * width
+        qimg = QImage(frame, width, height, channel, QImage.Format.Format_RGB888)
         pixmap = QPixmap.fromImage(qimg)
 
         # Scale pixmap to fit label while keeping aspect ratio
