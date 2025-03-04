@@ -68,11 +68,11 @@ class Camera(QThread):
 
             while True:
                 inRgb = qRgb.get()
-                frame = inRgb.getCvFrame()
+                self.frame = inRgb.getCvFrame()
 
-                if frame is not None:
-                    print(f"Frame received: {frame.shape}")  # Debugging
-                    self.frameCaptured.emit(frame)  # Emit frame signal
+                if self.frame is not None:
+                    print(f"Frame received: {self.frame.shape}")  # Debugging
+                    self.frameCaptured.emit(self.frame)  # Emit frame signal
                     print("Signal emitted")  # Debugging
 
                 self.msleep(10)
@@ -116,6 +116,7 @@ class Camera(QThread):
 class Window(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
+
         self.setWindowTitle("Camera")
         self.setStyleSheet(
             "font-family: garamond; \
@@ -151,8 +152,26 @@ class Window(QMainWindow):
         if self.camera_option_preview.isChecked():
             self.camera_thread.rgb_preview()
 
+        height, width, channel = self.camera_thread.frame
+        bytes_per_line = 3 * width
+        qimg = QImage(
+            self.camera_thread.frame,
+            width,
+            height,
+            bytes_per_line,
+            QImage.Format.Format_RGB888,
+        )
+        pixmap = QPixmap.fromImage(qimg)
+
+        # Scale pixmap to fit label while keeping aspect ratio
+        self.video_label.setPixmap(
+            pixmap.scaled(self.video_label.size(), Qt.AspectRatioMode.KeepAspectRatio)
+        )
+
         print("Signal connected")  # Debugging
-        self.camera_thread.frameCaptured.connect(self.update_frame)
+        self.camera_thread.frameCaptured.connect(
+            self.update_frame(self.camera_thread.frame)
+        )
         self.camera_thread.start()
 
     def create_window(self) -> None:
@@ -209,18 +228,7 @@ class Window(QMainWindow):
         # Convert OpenCV image (BGR) to RGB
         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-        height, width, channel = frame_rgb.shape
-        bytes_per_line = 3 * width
-        qimg = QImage(
-            frame_rgb.data, width, height, bytes_per_line, QImage.Format.Format_RGB888
-        )
-        pixmap = QPixmap.fromImage(qimg)
-
-        # Scale pixmap to fit label while keeping aspect ratio
-        self.video_label.setPixmap(
-            pixmap.scaled(self.video_label.size(), Qt.AspectRatioMode.KeepAspectRatio)
-        )
-        self.video_label.repaint()  # Force UI update
+        return frame_rgb
 
     def close_event(self, event):
         """Handle window close event to stop camera thread."""
