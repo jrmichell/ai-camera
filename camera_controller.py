@@ -1,3 +1,4 @@
+import cv2
 import depthai as dai
 import numpy as np
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
@@ -12,11 +13,9 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-frameCaptured = pyqtSignal(np.ndarray)
-
 
 class Camera(QThread):
-    frame = pyqtSignal(np.ndarray)
+    frameCaptured = pyqtSignal(np.ndarray)
 
     def __init__(self) -> None:
         self.pipeline = dai.Pipeline()
@@ -70,7 +69,11 @@ class Camera(QThread):
                 frame = inRgb.getCvFrame()
 
                 if frame is not None:
-                    self.frame.emit(frame)  # Emit frame signal
+                    print(f"Frame received: {frame.shape}")  # Debugging
+                    self.frameCaptured.emit(frame)  # Emit frame signal
+                    print("Signal emitted")  # Debugging
+
+                self.msleep(10)
 
                 # Prevent high CPU usage
                 if not self.isInterruptionRequested():
@@ -86,6 +89,7 @@ class Camera(QThread):
 
             # Output queue will be used to get the encoded data from the output defined above
             q = device.getOutputQueue(name="h265", maxSize=30, blocking=True)
+
             # The .h265 file is a raw stream file (not playable yet)
             with open("video.h265", "wb") as videoFile:
                 print("Press Ctrl+C to stop encoding...")
@@ -122,19 +126,19 @@ class Window(QMainWindow):
         # Main widget
         self.central_widget = QWidget(self)
         self.setCentralWidget(self.central_widget)
-        self.main_layout = QVBoxLayout(self)
-        self.main_layout.addWidget(self.central_widget)
+        self.main_layout = QVBoxLayout(self.central_widget)
 
         # QLabel to display the video
         self.video_label = QLabel(self)
         self.video_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.video_label.setStyleSheet("background-color: black;")  # Ensure visibility
+        self.video_label.setPixmap(QPixmap(640, 480))  # Placeholder
         self.main_layout.addWidget(self.video_label)
 
         # Start DepthAI Thread
         self.camera_thread = Camera()
-        self.camera_thread.frame.connect(self.update_frame(frameCaptured))
-        print("Signal connected")
+        print("Signal connected")  # Debugging
+        self.camera_thread.frameCaptured.connect(self.update_frame)
         self.camera_thread.start()
 
     def create_window(self) -> None:
@@ -185,15 +189,24 @@ class Window(QMainWindow):
         #     self.rgb_video(pipeline)
 
     def update_frame(self, frame):
-        print("Updating frame")
         """Update QLabel with the latest frame."""
-        height, width, channel = frame.shape
-        # bytes_per_line = 3 * width
-        qimg = QImage(frame, width, height, channel, QImage.Format.Format_RGB888)
-        pixmap = QPixmap(qimg)
+        print(f"Updating frame: {frame.shape}")  # Debugging
+
+        # Convert OpenCV image (BGR) to RGB
+        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+        height, width, channel = frame_rgb.shape
+        bytes_per_line = 3 * width
+        qimg = QImage(
+            frame_rgb.data, width, height, bytes_per_line, QImage.Format.Format_RGB888
+        )
+        pixmap = QPixmap.fromImage(qimg)
 
         # Scale pixmap to fit label while keeping aspect ratio
-        self.video_label.setPixmap(pixmap)
+        self.video_label.setPixmap(
+            pixmap.scaled(self.video_label.size(), Qt.AspectRatioMode.KeepAspectRatio)
+        )
+        self.video_label.repaint()  # Force UI update
 
     def close_event(self, event):
         """Handle window close event to stop camera thread."""
