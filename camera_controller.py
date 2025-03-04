@@ -5,7 +5,6 @@ import numpy as np
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from PyQt6.QtGui import QImage, QPixmap
 from PyQt6.QtWidgets import (
-    QApplication,
     QComboBox,
     QGridLayout,
     QLabel,
@@ -21,11 +20,6 @@ class Camera(QThread):
     def __init__(self) -> None:
         self.pipeline = dai.Pipeline()
         super().__init__()
-
-        app = QApplication(sys.argv)
-        window = Window()
-        window.show()
-        app.exec()
 
     def rgb_init(self) -> None:
         # Define source and output
