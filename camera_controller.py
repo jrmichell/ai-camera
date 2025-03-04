@@ -135,8 +135,22 @@ class Window(QMainWindow):
         self.video_label.setPixmap(QPixmap(640, 480))  # Placeholder
         self.main_layout.addWidget(self.video_label)
 
+        self.options_layout = QVBoxLayout(self)
+
+        # Camera Options
+        self.camera_option_video = QRadioButton("Video", self)
+        self.camera_option_preview = QRadioButton("Preview", self)
+        self.main_layout.addLayout(self.options_layout, 1)
+        # Set preview to be checked by default
+        self.camera_option_preview.setChecked(
+            True
+        )  # NOTE: Crashes program if camera is not connected
+
         # Start DepthAI Thread
         self.camera_thread = Camera()
+        if self.camera_option_preview.isChecked():
+            self.camera_thread.rgb_preview()
+
         print("Signal connected")  # Debugging
         self.camera_thread.frameCaptured.connect(self.update_frame)
         self.camera_thread.start()
