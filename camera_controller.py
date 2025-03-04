@@ -120,9 +120,12 @@ class Window(QMainWindow):
         self.resize(800, 600)
 
         # Start DepthAI Thread
-        self.camera_thread = Camera()
-        self.camera_thread.frameCaptured.connect(self.update_frame)
-        self.camera_thread.start()
+        try:
+            self.camera_thread = Camera()
+            self.camera_thread.frameCaptured.connect(self.update_frame)
+            self.camera_thread.start()
+        except Exception as e:
+            raise e
 
     def create_window(self) -> None:
 
