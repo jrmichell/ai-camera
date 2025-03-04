@@ -1,4 +1,3 @@
-from depthai import Pipeline
 from PyQt6.QtWidgets import QApplication
 
 from camera_controller import CameraController

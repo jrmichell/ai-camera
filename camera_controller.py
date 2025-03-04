@@ -1,7 +1,6 @@
 import cv2
 import depthai as dai
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QImage, QPixmap
 from PyQt6.QtWidgets import (
     QComboBox,
     QGridLayout,
@@ -18,9 +17,9 @@ class CameraController(QWidget):
         self.pipeline = dai.Pipeline()
         super().__init__()
 
-    def rgb_init(self) -> None:
-        # pipeline = dai.Pipeline()
+        self.create_window()
 
+    def rgb_init(self) -> None:
         # Define source and output
         camRgb = self.pipeline.create(dai.node.ColorCamera)
         xoutRgb = self.pipeline.create(dai.node.XLinkOut)
@@ -53,8 +52,6 @@ class CameraController(QWidget):
     def rgb_preview(self) -> None:
         self.rgb_init()
 
-        print("pipeline", self.pipeline)
-
         # Connect to device and start pipeline
         with dai.Device(self.pipeline) as device:
 
@@ -84,10 +81,10 @@ class CameraController(QWidget):
                 # self.frame.setPixmap(pixmap)
 
     # TODO: Redo the rgb_video() method to use opencv2
-    def rgb_video(self, pipeline: dai.Pipeline) -> None:
+    def rgb_video(self) -> None:
         self.rgb_init()
         # Connect to device and start pipeline
-        with dai.Device(pipeline) as device:
+        with dai.Device(self.pipeline) as device:
 
             # Output queue will be used to get the encoded data from the output defined above
             q = device.getOutputQueue(name="h265", maxSize=30, blocking=True)
