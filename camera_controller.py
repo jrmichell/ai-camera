@@ -64,9 +64,7 @@ class Camera(QThread):
             print("device", device)
 
             # Output queue will be used to get the rgb frames from the output defined above
-            qRgb = device.getOutputQueue(
-                name=self.color_orders[0].lower(), maxSize=4, blocking=False
-            )
+            qRgb = device.getOutputQueue(name="rgb", maxSize=4, blocking=False)
 
             while True:
                 inRgb = qRgb.get()
