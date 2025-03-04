@@ -9,6 +9,7 @@ from PyQt6.QtWidgets import (
     QMainWindow,
     QRadioButton,
     QVBoxLayout,
+    QWidget,
 )
 
 
@@ -116,6 +117,18 @@ class Window(QMainWindow):
              background-color: #000;"
         )
         self.resize(800, 600)
+
+        # Main widget
+        self.central_widget = QWidget(self)
+        self.setCentralWidget(self.central_widget)
+        self.main_layout = QVBoxLayout(self)
+        self.main_layout.addWidget(self.central_widget)
+
+        # QLabel to display the video
+        self.video_label = QLabel(self)
+        self.video_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.video_label.setStyleSheet("background-color: black;")  # Ensure visibility
+        self.main_layout.addWidget(self.video_label)
 
         # Start DepthAI Thread
         self.camera_thread = Camera()
