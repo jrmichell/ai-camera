@@ -19,29 +19,27 @@ class Camera(QThread):
         print("Starting DepthAI Camera Thread...")
 
         # Create the DepthAI pipeline inside run() to avoid blocking the main thread
-        pipeline = dai.Pipeline()
+        self.pipeline = dai.Pipeline()
 
         # Define options for camera
         self.options = ["preview", "video"]
 
         # Define source and output
-        camRgb = pipeline.create(dai.node.ColorCamera)
-        xoutRgb = pipeline.create(dai.node.XLinkOut)
+        camRgb = self.pipeline.create(dai.node.ColorCamera)
+        xoutRgb = self.pipeline.create(dai.node.XLinkOut)
         xoutRgb.setStreamName("rgb")
 
         # Set up preview
         camRgb.preview.link(xoutRgb.input)
         camRgb.setInterleaved(False)
 
-        for option in self.options:
-            if option == "preview":
-                self.rgb_preview(pipeline)
-                break
-            elif option == "video":
-                print("Video is not yet supported.")
-                sys.exit(1)
-                # TODO: Create rgb_video()
-                # self.rgb_video(pipeline)
+        if self.options[0] == "preview":
+            self.rgb_preview(self.pipeline)
+        elif self.options[1] == "video":
+            print("Video is not yet supported.")
+            sys.exit(1)
+            # TODO: Create rgb_video()
+            # self.rgb_video(pipeline)
 
         # Connect to the device and start the pipeline
         # with dai.Device(pipeline) as device:
@@ -120,11 +118,12 @@ class Window(QMainWindow):
         self.options_layout.addWidget(self.camera_option_video)
         self.main_layout.addLayout(self.options_layout)
 
-        # Set preview to be checked by default
-        self.camera_option_preview.setChecked(True)
-
         # Start DepthAI Thread
         self.camera_thread = Camera()
+        # Set preview to be checked by default
+        if self.camera_option_preview.setChecked(True):
+            self.camera_thread.rgb_preview(self.camera_thread.pipeline)
+
         print("Signal connected")  # Debugging
         self.camera_thread.frameCaptured.connect(self.update_frame)
         self.camera_thread.start()  # Start the camera thread
