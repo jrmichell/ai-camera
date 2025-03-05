@@ -75,8 +75,6 @@ class Camera(QThread):
                     self.frameCaptured.emit(frame)  # Emit frame signal
                     print("Signal emitted")  # Debugging
 
-                self.msleep(10)
-
                 # Prevent high CPU usage
                 if not self.isInterruptionRequested():
                     self.msleep(10)
@@ -167,7 +165,11 @@ class Window(QMainWindow):
         height, width, channel = frame_rgb.shape
         bytes_per_line = 3 * width
         qimg = QImage(
-            frame_rgb.data.tobytes(), width, height, QImage.Format.Format_RGB888
+            frame_rgb.data.tobytes(),
+            width,
+            height,
+            bytes_per_line,
+            QImage.Format.Format_RGB888,
         )
         pixmap = QPixmap.fromImage(qimg)
 
