@@ -155,6 +155,9 @@ class Window(QMainWindow):
         self.camera_thread.frameCaptured.connect(self.update_frame)
         self.camera_thread.start()  # Start the camera thread
 
+        if self.camera_option_preview.isChecked():
+            self.camera_thread.rgb_preview()
+
     def update_frame(self, frame: np.ndarray):
         """Update QLabel with the latest frame."""
         print(f"Updating frame: {frame.shape}")  # Debugging
