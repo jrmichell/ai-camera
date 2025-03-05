@@ -21,56 +21,94 @@ class Camera(QThread):
         # self.pipeline = dai.Pipeline()
         super().__init__()
 
-    def rgb_init(self) -> dai.Pipeline:
+    # def rgb_init(self) -> dai.Pipeline:
+    #     pipeline = dai.Pipeline()
+    #
+    #     # Define source and output
+    #     camRgb = pipeline.create(dai.node.ColorCamera)
+    #     xoutRgb = pipeline.create(dai.node.XLinkOut)
+    #
+    #     """Color Orders"""
+    #     # self.color_orders = ["RGB", "BGR"]
+    #     # if self.color_orders[0]:  # RGB
+    #     #     camRgb.setColorOrder(dai.ColorCameraProperties.ColorOrder.RGB)
+    #     #     xoutRgb.setStreamName(self.color_orders[0].lower())
+    #     #
+    #     # if self.color_orders[1]:  # BGR
+    #     #     camRgb.setColorOrder(dai.ColorCameraProperties.ColorOrder.BGR)
+    #     #     xoutRgb.setStreamName(self.color_orders[1].lower())
+    #
+    #     xoutRgb.setStreamName("rgb")
+    #
+    #     """Options"""
+    #     self.options = ["preview", "video"]
+    #     if self.options[0]:  # Preview
+    #         # Linking
+    #         camRgb.preview.link(xoutRgb.input)
+    #
+    #         # Properties
+    #         camRgb.setInterleaved(False)
+    #
+    #     if self.options[1]:  # Video
+    #         # Properties
+    #         camRgb.setBoardSocket(dai.CameraBoardSocket.CAM_A)
+    #         camRgb.setResolution(dai.ColorCameraProperties.SensorResolution.THE_1080_P)
+    #
+    #         xoutRgb.input.setBlocking(False)
+    #         xoutRgb.input.setQueueSize(1)
+    #
+    #     return pipeline
+
+    # def rgb_preview(self) -> None:
+    #     pipeline = self.rgb_init()
+    #
+    #     # Connect to device and start pipeline
+    #     with dai.Device(pipeline) as device:
+    #
+    #         print("device", device)
+    #
+    #         # Output queue will be used to get the rgb frames from the output defined above
+    #         qRgb = device.getOutputQueue(name="rgb", maxSize=4, blocking=False)
+    #
+    #         while True:
+    #             inRgb = qRgb.get()
+    #             frame = inRgb.getCvFrame()
+    #
+    #             if frame is not None:
+    #                 print(f"Frame received: {frame.shape}")  # Debugging
+    #                 self.frameCaptured.emit(frame)  # Emit frame signal
+    #                 print("Signal emitted")  # Debugging
+    #
+    #             # Prevent high CPU usage
+    #             if not self.isInterruptionRequested():
+    #                 self.msleep(10)
+    #             else:
+    #                 break
+
+    def run(self) -> None:
+        """Runs the camera processing loop in a separate thread."""
+        print("Starting DepthAI Camera Thread...")
+
+        # Create the DepthAI pipeline inside run() to avoid blocking the main thread
         pipeline = dai.Pipeline()
 
         # Define source and output
         camRgb = pipeline.create(dai.node.ColorCamera)
         xoutRgb = pipeline.create(dai.node.XLinkOut)
-
-        """Color Orders"""
-        # self.color_orders = ["RGB", "BGR"]
-        # if self.color_orders[0]:  # RGB
-        #     camRgb.setColorOrder(dai.ColorCameraProperties.ColorOrder.RGB)
-        #     xoutRgb.setStreamName(self.color_orders[0].lower())
-        #
-        # if self.color_orders[1]:  # BGR
-        #     camRgb.setColorOrder(dai.ColorCameraProperties.ColorOrder.BGR)
-        #     xoutRgb.setStreamName(self.color_orders[1].lower())
-
         xoutRgb.setStreamName("rgb")
 
-        """Options"""
-        self.options = ["preview", "video"]
-        if self.options[0]:  # Preview
-            # Linking
-            camRgb.preview.link(xoutRgb.input)
+        # Set up preview
+        camRgb.preview.link(xoutRgb.input)
+        camRgb.setInterleaved(False)
 
-            # Properties
-            camRgb.setInterleaved(False)
-
-        if self.options[1]:  # Video
-            # Properties
-            camRgb.setBoardSocket(dai.CameraBoardSocket.CAM_A)
-            camRgb.setResolution(dai.ColorCameraProperties.SensorResolution.THE_1080_P)
-
-            xoutRgb.input.setBlocking(False)
-            xoutRgb.input.setQueueSize(1)
-
-        return pipeline
-
-    def rgb_preview(self) -> None:
-        pipeline = self.rgb_init()
-
-        # Connect to device and start pipeline
+        # Connect to the device and start the pipeline
         with dai.Device(pipeline) as device:
+            print("Device connected:", device)
 
-            print("device", device)
-
-            # Output queue will be used to get the rgb frames from the output defined above
+            # Output queue will be used to get the rgb frames
             qRgb = device.getOutputQueue(name="rgb", maxSize=4, blocking=False)
 
-            while True:
+            while not self.isInterruptionRequested():
                 inRgb = qRgb.get()
                 frame = inRgb.getCvFrame()
 
@@ -79,41 +117,37 @@ class Camera(QThread):
                     self.frameCaptured.emit(frame)  # Emit frame signal
                     print("Signal emitted")  # Debugging
 
-                # Prevent high CPU usage
-                if not self.isInterruptionRequested():
-                    self.msleep(10)
-                else:
-                    break
+                self.msleep(10)  # Prevent high CPU usage
 
     # TODO: Redo rgb_video() method
-    def rgb_video(self) -> None:
-        pipeline = self.rgb_init()
-
-        # Connect to device and start pipeline
-        with dai.Device(pipeline) as device:
-
-            # Output queue will be used to get the encoded data from the output defined above
-            q = device.getOutputQueue(name="h265", maxSize=30, blocking=True)
-
-            # The .h265 file is a raw stream file (not playable yet)
-            with open("video.h265", "wb") as videoFile:
-                print("Press Ctrl+C to stop encoding...")
-                try:
-                    while True:
-                        h265Packet = (
-                            q.get()
-                        )  # Blocking call, will wait until a new data has arrived
-                        h265Packet.getData().tofile(
-                            videoFile
-                        )  # Appends the packet data to the opened file
-                except KeyboardInterrupt:
-                    # Keyboard interrupt (Ctrl + C) detected
-                    pass
-
-        print(
-            "To view the encoded data, convert the stream file (.h265) into a video file (.mp4) using a command below:"
-        )
-        print("ffmpeg -framerate 30 -i video.h265 -c copy video.mp4")
+    # def rgb_video(self) -> None:
+    #     pipeline = self.rgb_init()
+    #
+    #     # Connect to device and start pipeline
+    #     with dai.Device(pipeline) as device:
+    #
+    #         # Output queue will be used to get the encoded data from the output defined above
+    #         q = device.getOutputQueue(name="h265", maxSize=30, blocking=True)
+    #
+    #         # The .h265 file is a raw stream file (not playable yet)
+    #         with open("video.h265", "wb") as videoFile:
+    #             print("Press Ctrl+C to stop encoding...")
+    #             try:
+    #                 while True:
+    #                     h265Packet = (
+    #                         q.get()
+    #                     )  # Blocking call, will wait until a new data has arrived
+    #                     h265Packet.getData().tofile(
+    #                         videoFile
+    #                     )  # Appends the packet data to the opened file
+    #             except KeyboardInterrupt:
+    #                 # Keyboard interrupt (Ctrl + C) detected
+    #                 pass
+    #
+    #     print(
+    #         "To view the encoded data, convert the stream file (.h265) into a video file (.mp4) using a command below:"
+    #     )
+    #     print("ffmpeg -framerate 30 -i video.h265 -c copy video.mp4")
 
 
 class Window(QMainWindow):
@@ -160,8 +194,8 @@ class Window(QMainWindow):
         self.camera_thread.frameCaptured.connect(self.update_frame)
         self.camera_thread.start()  # Start the camera thread
 
-        if self.camera_option_preview.isChecked():
-            self.camera_thread.rgb_preview()
+        # if self.camera_option_preview.isChecked():
+        #     self.camera_thread.rgb_preview()
 
     def update_frame(self, frame: np.ndarray):
         """Update QLabel with the latest frame."""
