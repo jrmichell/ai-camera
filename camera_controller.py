@@ -18,13 +18,15 @@ class Camera(QThread):
     frameCaptured = pyqtSignal(np.ndarray)
 
     def __init__(self) -> None:
-        self.pipeline = dai.Pipeline()
+        # self.pipeline = dai.Pipeline()
         super().__init__()
 
-    def rgb_init(self) -> None:
+    def rgb_init(self) -> dai.Pipeline:
+        pipeline = dai.Pipeline()
+
         # Define source and output
-        camRgb = self.pipeline.create(dai.node.ColorCamera)
-        xoutRgb = self.pipeline.create(dai.node.XLinkOut)
+        camRgb = pipeline.create(dai.node.ColorCamera)
+        xoutRgb = pipeline.create(dai.node.XLinkOut)
 
         """Color Orders"""
         # self.color_orders = ["RGB", "BGR"]
@@ -55,11 +57,13 @@ class Camera(QThread):
             xoutRgb.input.setBlocking(False)
             xoutRgb.input.setQueueSize(1)
 
+        return pipeline
+
     def rgb_preview(self) -> None:
-        self.rgb_init()
+        pipeline = self.rgb_init()
 
         # Connect to device and start pipeline
-        with dai.Device(self.pipeline) as device:
+        with dai.Device(pipeline) as device:
 
             print("device", device)
 
@@ -83,9 +87,10 @@ class Camera(QThread):
 
     # TODO: Redo rgb_video() method
     def rgb_video(self) -> None:
-        self.rgb_init()
+        pipeline = self.rgb_init()
+
         # Connect to device and start pipeline
-        with dai.Device(self.pipeline) as device:
+        with dai.Device(pipeline) as device:
 
             # Output queue will be used to get the encoded data from the output defined above
             q = device.getOutputQueue(name="h265", maxSize=30, blocking=True)
