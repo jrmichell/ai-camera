@@ -1,3 +1,5 @@
+import sys
+
 import cv2
 import depthai as dai
 import numpy as np
@@ -12,39 +14,15 @@ class Camera(QThread):
     def __init__(self) -> None:
         super().__init__()
 
-    # TODO: Redo rgb_preview()
-    # def rgb_preview(self) -> None:
-    #     pipeline = self.rgb_init()
-    #
-    #     # Connect to device and start pipeline
-    #     with dai.Device(pipeline) as device:
-    #
-    #         print("device", device)
-    #
-    #         # Output queue will be used to get the rgb frames from the output defined above
-    #         qRgb = device.getOutputQueue(name="rgb", maxSize=4, blocking=False)
-    #
-    #         while True:
-    #             inRgb = qRgb.get()
-    #             frame = inRgb.getCvFrame()
-    #
-    #             if frame is not None:
-    #                 print(f"Frame received: {frame.shape}")  # Debugging
-    #                 self.frameCaptured.emit(frame)  # Emit frame signal
-    #                 print("Signal emitted")  # Debugging
-    #
-    #             # Prevent high CPU usage
-    #             if not self.isInterruptionRequested():
-    #                 self.msleep(10)
-    #             else:
-    #                 break
-
     def init(self) -> None:
         """Runs the camera processing loop in a separate thread."""
         print("Starting DepthAI Camera Thread...")
 
         # Create the DepthAI pipeline inside run() to avoid blocking the main thread
         pipeline = dai.Pipeline()
+
+        # Define options for camera
+        self.options = ["preview", "video"]
 
         # Define source and output
         camRgb = pipeline.create(dai.node.ColorCamera)
@@ -55,14 +33,43 @@ class Camera(QThread):
         camRgb.preview.link(xoutRgb.input)
         camRgb.setInterleaved(False)
 
-        # Connect to the device and start the pipeline
-        with dai.Device(pipeline) as device:
-            print("Device connected:", device)
+        for option in self.options:
+            if option == "preview":
+                self.rgb_preview(pipeline)
+                break
+            elif option == "video":
+                print("Video is not yet supported.")
+                sys.exit(1)
+                # TODO: Create rgb_video()
+                # self.rgb_video(pipeline)
 
-            # Output queue will be used to get the rgb frames
+        # Connect to the device and start the pipeline
+        # with dai.Device(pipeline) as device:
+        #     print("Device connected:", device)
+
+        #     # Output queue will be used to get the rgb frames
+        #     qRgb = device.getOutputQueue(name="rgb", maxSize=4, blocking=False)
+
+        #     while not self.isInterruptionRequested():
+        #         inRgb = qRgb.get()
+        #         frame = inRgb.getCvFrame()
+
+        #         if frame is not None:
+        #             print(f"Frame received: {frame.shape}")  # Debugging
+        #             self.frameCaptured.emit(frame)  # Emit frame signal
+        #             print("Signal emitted")  # Debugging
+
+        #         self.msleep(10)  # Prevent high CPU usage
+
+    def rgb_preview(self, pipeline: dai.Pipeline) -> None:
+        # Connect to device and start pipeline
+        with dai.Device(pipeline) as device:
+            print("Device connected:", device)  # Debugging
+
+            # Output queue will be used to get the rgb frames from the output defined above
             qRgb = device.getOutputQueue(name="rgb", maxSize=4, blocking=False)
 
-            while not self.isInterruptionRequested():
+            while True:
                 inRgb = qRgb.get()
                 frame = inRgb.getCvFrame()
 
@@ -71,7 +78,11 @@ class Camera(QThread):
                     self.frameCaptured.emit(frame)  # Emit frame signal
                     print("Signal emitted")  # Debugging
 
-                self.msleep(10)  # Prevent high CPU usage
+                # Prevent high CPU usage
+                if not self.isInterruptionRequested():
+                    self.msleep(10)
+                else:
+                    break
 
 
 class Window(QMainWindow):
@@ -118,7 +129,7 @@ class Window(QMainWindow):
         self.camera_thread.frameCaptured.connect(self.update_frame)
         self.camera_thread.start()  # Start the camera thread
 
-    def update_frame(self, frame: np.ndarray):
+    def update_frame(self, frame: np.ndarray) -> None:
         """Update QLabel with the latest frame."""
         print(f"Updating frame: {frame.shape}")  # Debugging
 
@@ -142,9 +153,9 @@ class Window(QMainWindow):
         )
         self.video_label.repaint()  # Ensure UI refresh
 
-    def close_event(self, event):
-        """Handle window close event to stop camera thread."""
-        self.camera_thread.requestInterruption()
-        self.camera_thread.quit()
-        self.camera_thread.wait()
-        event.accept()
+    # def close_event(self, event) -> None:
+    #     """Handle window close event to stop camera thread."""
+    #     self.camera_thread.requestInterruption()
+    #     self.camera_thread.quit()
+    #     self.camera_thread.wait()
+    #     event.accept()
