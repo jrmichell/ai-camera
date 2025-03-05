@@ -3,62 +3,16 @@ import depthai as dai
 import numpy as np
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from PyQt6.QtGui import QImage, QPixmap
-from PyQt6.QtWidgets import (
-    QComboBox,
-    QGridLayout,
-    QLabel,
-    QMainWindow,
-    QRadioButton,
-    QVBoxLayout,
-    QWidget,
-)
+from PyQt6.QtWidgets import QLabel, QMainWindow, QRadioButton, QVBoxLayout, QWidget
 
 
 class Camera(QThread):
     frameCaptured = pyqtSignal(np.ndarray)
 
     def __init__(self) -> None:
-        # self.pipeline = dai.Pipeline()
         super().__init__()
 
-    # def rgb_init(self) -> dai.Pipeline:
-    #     pipeline = dai.Pipeline()
-    #
-    #     # Define source and output
-    #     camRgb = pipeline.create(dai.node.ColorCamera)
-    #     xoutRgb = pipeline.create(dai.node.XLinkOut)
-    #
-    #     """Color Orders"""
-    #     # self.color_orders = ["RGB", "BGR"]
-    #     # if self.color_orders[0]:  # RGB
-    #     #     camRgb.setColorOrder(dai.ColorCameraProperties.ColorOrder.RGB)
-    #     #     xoutRgb.setStreamName(self.color_orders[0].lower())
-    #     #
-    #     # if self.color_orders[1]:  # BGR
-    #     #     camRgb.setColorOrder(dai.ColorCameraProperties.ColorOrder.BGR)
-    #     #     xoutRgb.setStreamName(self.color_orders[1].lower())
-    #
-    #     xoutRgb.setStreamName("rgb")
-    #
-    #     """Options"""
-    #     self.options = ["preview", "video"]
-    #     if self.options[0]:  # Preview
-    #         # Linking
-    #         camRgb.preview.link(xoutRgb.input)
-    #
-    #         # Properties
-    #         camRgb.setInterleaved(False)
-    #
-    #     if self.options[1]:  # Video
-    #         # Properties
-    #         camRgb.setBoardSocket(dai.CameraBoardSocket.CAM_A)
-    #         camRgb.setResolution(dai.ColorCameraProperties.SensorResolution.THE_1080_P)
-    #
-    #         xoutRgb.input.setBlocking(False)
-    #         xoutRgb.input.setQueueSize(1)
-    #
-    #     return pipeline
-
+    # TODO: Redo rgb_preview()
     # def rgb_preview(self) -> None:
     #     pipeline = self.rgb_init()
     #
@@ -85,7 +39,7 @@ class Camera(QThread):
     #             else:
     #                 break
 
-    def run(self) -> None:
+    def init(self) -> None:
         """Runs the camera processing loop in a separate thread."""
         print("Starting DepthAI Camera Thread...")
 
@@ -118,36 +72,6 @@ class Camera(QThread):
                     print("Signal emitted")  # Debugging
 
                 self.msleep(10)  # Prevent high CPU usage
-
-    # TODO: Redo rgb_video() method
-    # def rgb_video(self) -> None:
-    #     pipeline = self.rgb_init()
-    #
-    #     # Connect to device and start pipeline
-    #     with dai.Device(pipeline) as device:
-    #
-    #         # Output queue will be used to get the encoded data from the output defined above
-    #         q = device.getOutputQueue(name="h265", maxSize=30, blocking=True)
-    #
-    #         # The .h265 file is a raw stream file (not playable yet)
-    #         with open("video.h265", "wb") as videoFile:
-    #             print("Press Ctrl+C to stop encoding...")
-    #             try:
-    #                 while True:
-    #                     h265Packet = (
-    #                         q.get()
-    #                     )  # Blocking call, will wait until a new data has arrived
-    #                     h265Packet.getData().tofile(
-    #                         videoFile
-    #                     )  # Appends the packet data to the opened file
-    #             except KeyboardInterrupt:
-    #                 # Keyboard interrupt (Ctrl + C) detected
-    #                 pass
-    #
-    #     print(
-    #         "To view the encoded data, convert the stream file (.h265) into a video file (.mp4) using a command below:"
-    #     )
-    #     print("ffmpeg -framerate 30 -i video.h265 -c copy video.mp4")
 
 
 class Window(QMainWindow):
@@ -194,9 +118,6 @@ class Window(QMainWindow):
         self.camera_thread.frameCaptured.connect(self.update_frame)
         self.camera_thread.start()  # Start the camera thread
 
-        # if self.camera_option_preview.isChecked():
-        #     self.camera_thread.rgb_preview()
-
     def update_frame(self, frame: np.ndarray):
         """Update QLabel with the latest frame."""
         print(f"Updating frame: {frame.shape}")  # Debugging
@@ -227,50 +148,3 @@ class Window(QMainWindow):
         self.camera_thread.quit()
         self.camera_thread.wait()
         event.accept()
-
-    def create_window(self) -> None:
-
-        # Layouts
-        # main_layout = QGridLayout()
-        # options_layout = QVBoxLayout()
-
-        """Color Orders"""
-        # Widgets
-        # color_orders = ["RGB", "BGR"]
-        # color_order_selector = QComboBox()
-        # color_order_selector.addItems(color_orders)
-        # self.main_layout.addWidget(color_order_selector)
-        """Camera Options"""
-        # camera_option_video = QRadioButton("Video", self)
-        # camera_options_preview = QRadioButton("Preview", self)
-        # self.main_layout.addLayout(
-        #     options_layout, 1, 1, alignment=Qt.AlignmentFlag.AlignRight
-        # )
-        # Set preview to be checked by default
-        # camera_options_preview.setChecked(
-        #     True
-        # )  # NOTE: Crashes program if camera is not connected
-
-        # Add everything needed for the options layout
-        # options_layout.addWidget(camera_options_preview)
-        # options_layout.addWidget(camera_option_video)
-
-        """Video Display"""
-        # self.video_label = QLabel(self)
-        # self.setCentralWidget(self.video_label)
-        # main_layout.addWidget(
-        #     self.video_label, 0, 1, alignment=Qt.AlignmentFlag.AlignCenter
-        # )
-
-        # Add everything needed for the main layout
-
-        # Set layouts
-        # self.setLayout(main_layout)
-
-        # FIX: Wait until selection is executed
-        # if camera_options_preview.isChecked():
-        #     self.option = "preview"
-        #     self.rgb_preview()
-        # if camera_option_video.isChecked():
-        #     self.option = "video"
-        #     self.rgb_video(pipeline)
