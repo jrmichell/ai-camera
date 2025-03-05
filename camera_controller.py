@@ -128,6 +128,7 @@ class Window(QMainWindow):
 
         # Main widget
         self.main_layout = QVBoxLayout(self)
+        self.main_widget = QWidget(self)
 
         # QLabel to display the video
         self.video_label = QLabel(self)
@@ -147,27 +148,10 @@ class Window(QMainWindow):
             True
         )  # NOTE: Crashes program if camera is not connected
 
+        self.setLayout(self.main_layout)
+
         # Start DepthAI Thread
         self.camera_thread = Camera()
-        if self.camera_option_preview.isChecked():
-            self.camera_thread.rgb_preview()
-
-        height, width, channel = self.camera_thread.frame
-        bytes_per_line = 3 * width
-        qimg = QImage(
-            self.camera_thread.frame,
-            width,
-            height,
-            bytes_per_line,
-            QImage.Format.Format_RGB888,
-        )
-        pixmap = QPixmap.fromImage(qimg)
-
-        # Scale pixmap to fit label while keeping aspect ratio
-        self.video_label.setPixmap(
-            pixmap.scaled(self.video_label.size(), Qt.AspectRatioMode.KeepAspectRatio)
-        )
-
         print("Signal connected")  # Debugging
         self.camera_thread.frameCaptured.connect(
             self.update_frame(self.camera_thread.frame)
@@ -223,12 +207,21 @@ class Window(QMainWindow):
 
     def update_frame(self, frame):
         """Update QLabel with the latest frame."""
+        frame = self.camera_thread.frame.shape
+
         print(f"Updating frame: {frame.shape}")  # Debugging
 
-        # Convert OpenCV image (BGR) to RGB
-        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        height, width, channel = frame
+        bytes_per_line = 3 * width
+        qimg = QImage(
+            frame.data, width, height, bytes_per_line, QImage.Format.Format_RGB888
+        )
+        pixmap = QPixmap.fromImage(qimg)
 
-        return frame_rgb
+        # Scale pixmap to fit label while keeping aspect ratio
+        self.video_label.setPixmap(
+            pixmap.scaled(self.video_label.size(), Qt.AspectRatioMode.KeepAspectRatio)
+        )
 
     def close_event(self, event):
         """Handle window close event to stop camera thread."""
