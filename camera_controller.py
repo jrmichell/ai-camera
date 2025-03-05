@@ -68,11 +68,11 @@ class Camera(QThread):
 
             while True:
                 inRgb = qRgb.get()
-                self.frame = inRgb.getCvFrame()
+                frame = inRgb.getCvFrame()
 
-                if self.frame is not None:
-                    print(f"Frame received: {self.frame.shape}")  # Debugging
-                    self.frameCaptured.emit(self.frame)  # Emit frame signal
+                if frame is not None:
+                    print(f"Frame received: {frame.shape}")  # Debugging
+                    self.frameCaptured.emit(frame)  # Emit frame signal
                     print("Signal emitted")  # Debugging
 
                 self.msleep(10)
@@ -120,15 +120,17 @@ class Window(QMainWindow):
         self.setWindowTitle("Camera")
         self.setStyleSheet(
             "font-family: garamond; \
-             color: #000; \
+             color: #fff; \
              font-size: 32px; \
              background-color: #000;"
         )
         self.resize(800, 600)
 
         # Main widget
-        self.main_layout = QVBoxLayout(self)
-        self.main_widget = QWidget(self)
+        self.main_layout = QVBoxLayout()
+        self.main_widget = QWidget()
+        self.main_widget.setLayout(self.main_layout)
+        self.setCentralWidget(self.main_widget)
 
         # QLabel to display the video
         self.video_label = QLabel(self)
@@ -137,26 +139,50 @@ class Window(QMainWindow):
         self.video_label.setPixmap(QPixmap(640, 480))  # Placeholder
         self.main_layout.addWidget(self.video_label)
 
-        self.options_layout = QVBoxLayout(self)
+        self.options_layout = QVBoxLayout()
 
         # Camera Options
         self.camera_option_video = QRadioButton("Video", self)
         self.camera_option_preview = QRadioButton("Preview", self)
-        self.main_layout.addLayout(self.options_layout, 1)
-        # Set preview to be checked by default
-        self.camera_option_preview.setChecked(
-            True
-        )  # NOTE: Crashes program if camera is not connected
+        self.options_layout.addWidget(self.camera_option_preview)
+        self.options_layout.addWidget(self.camera_option_video)
+        self.main_layout.addLayout(self.options_layout)
 
-        self.setLayout(self.main_layout)
+        # Set preview to be checked by default
+        self.camera_option_preview.setChecked(True)
 
         # Start DepthAI Thread
         self.camera_thread = Camera()
         print("Signal connected")  # Debugging
-        self.camera_thread.frameCaptured.connect(
-            self.update_frame(self.camera_thread.frame)
+        self.camera_thread.frameCaptured.connect(self.update_frame)
+        self.camera_thread.start()  # Start the camera thread
+
+    def update_frame(self, frame: np.ndarray):
+        """Update QLabel with the latest frame."""
+        print(f"Updating frame: {frame.shape}")  # Debugging
+
+        # Convert OpenCV image (BGR) to RGB
+        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+        height, width, channel = frame_rgb.shape
+        bytes_per_line = 3 * width
+        qimg = QImage(
+            frame_rgb.data.tobytes(), width, height, QImage.Format.Format_RGB888
         )
-        self.camera_thread.start()
+        pixmap = QPixmap.fromImage(qimg)
+
+        # Scale pixmap to fit label while keeping aspect ratio
+        self.video_label.setPixmap(
+            pixmap.scaled(self.video_label.size(), Qt.AspectRatioMode.KeepAspectRatio)
+        )
+        self.video_label.repaint()  # Ensure UI refresh
+
+    def close_event(self, event):
+        """Handle window close event to stop camera thread."""
+        self.camera_thread.requestInterruption()
+        self.camera_thread.quit()
+        self.camera_thread.wait()
+        event.accept()
 
     def create_window(self) -> None:
 
@@ -204,28 +230,3 @@ class Window(QMainWindow):
         # if camera_option_video.isChecked():
         #     self.option = "video"
         #     self.rgb_video(pipeline)
-
-    def update_frame(self, frame):
-        """Update QLabel with the latest frame."""
-        frame = self.camera_thread.frame.shape
-
-        print(f"Updating frame: {frame.shape}")  # Debugging
-
-        height, width, channel = frame
-        bytes_per_line = 3 * width
-        qimg = QImage(
-            frame.data, width, height, bytes_per_line, QImage.Format.Format_RGB888
-        )
-        pixmap = QPixmap.fromImage(qimg)
-
-        # Scale pixmap to fit label while keeping aspect ratio
-        self.video_label.setPixmap(
-            pixmap.scaled(self.video_label.size(), Qt.AspectRatioMode.KeepAspectRatio)
-        )
-
-    def close_event(self, event):
-        """Handle window close event to stop camera thread."""
-        self.camera_thread.requestInterruption()
-        self.camera_thread.quit()
-        self.camera_thread.wait()
-        event.accept()
