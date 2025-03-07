@@ -29,10 +29,6 @@ class Camera(QThread):
         camRgb.setInterleaved(False)
 
         # Run preview
-        self.rgb_preview(pipeline)
-
-    def rgb_preview(self, pipeline: dai.Pipeline) -> None:
-        # Connect to device and start pipeline
         with dai.Device(pipeline) as device:
             print("Device connected:", device)
 
@@ -49,6 +45,25 @@ class Camera(QThread):
                     print("Signal emitted")  # Debugging
 
                 self.msleep(10)  # Prevent high CPU usage
+
+    # def rgb_preview(self, pipeline: dai.Pipeline) -> None:
+    #     # Connect to device and start pipeline
+    #     with dai.Device(pipeline) as device:
+    #         print("Device connected:", device)
+    #
+    #         # Output queue will be used to get the rgb frames
+    #         qRgb = device.getOutputQueue(name="rgb", maxSize=4, blocking=False)
+    #
+    #         while not self.isInterruptionRequested():
+    #             inRgb = qRgb.get()
+    #             frame = inRgb.getCvFrame()
+    #
+    #             if frame is not None:
+    #                 print(f"Frame received: {frame.shape}")  # Debugging
+    #                 self.frameCaptured.emit(frame)  # Emit frame signal
+    #                 print("Signal emitted")  # Debugging
+    #
+    #             self.msleep(10)  # Prevent high CPU usage
 
 
 class Window(QMainWindow):
