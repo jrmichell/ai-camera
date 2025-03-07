@@ -91,6 +91,8 @@ class Window(QMainWindow):
         # Set preview to be checked by default
         self.camera_option_preview.setChecked(True)
 
+        self.show()
+
         # Start DepthAI Thread
         self.camera_thread = Camera()
         print("Signal connected")  # Debugging

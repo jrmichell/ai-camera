@@ -8,7 +8,7 @@ from camera_controller import Window
 def main():
     app = QApplication(sys.argv)
     window = Window()
-    window.show()
+    window.__init__()
     sys.exit(app.exec())
 
 
