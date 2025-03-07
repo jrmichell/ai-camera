@@ -12,9 +12,7 @@ class Camera(QThread):
     def __init__(self) -> None:
         super().__init__()
 
-        self.init()
-
-    def init(self) -> None:
+    def run(self) -> None:
         """Runs the camera processing loop in a separate thread."""
         print("Starting DepthAI Camera Thread...")
 
@@ -30,10 +28,6 @@ class Camera(QThread):
         camRgb.preview.link(xoutRgb.input)
         camRgb.setInterleaved(False)
 
-        # Run preview
-        self.rgb_preview(pipeline)
-
-    def rgb_preview(self, pipeline: dai.Pipeline) -> None:
         # Connect to device and start pipeline
         with dai.Device(pipeline) as device:
             print("Device connected:", device)
@@ -90,8 +84,6 @@ class Window(QMainWindow):
 
         # Set preview to be checked by default
         self.camera_option_preview.setChecked(True)
-
-        self.show()
 
         # Start DepthAI Thread
         self.camera_thread = Camera()
